@@ -38,7 +38,8 @@ class JobService
      */
     public function index(array $filters, int $limit)
     {
-        return ITJob::filter($filters)
+       return ITJob::where('organization_id', $this->resolveCurrentOrganizationId())
+            ->filter($filters)
             ->with(['creator', 'editor'])
             ->paginate($limit);
     }

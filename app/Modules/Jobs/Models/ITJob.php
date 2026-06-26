@@ -69,11 +69,9 @@ class ITJob extends Model implements HasMedia
   /**
      * Scope filter và sort danh sách công việc.
      */
-    public function scopeFilter($query, array $filters = [])
+  public function scopeFilter($query, array $filters = [])
     {
         $query->when($filters['search'] ?? null, function ($query, $search) {
-            // Cần bọc where/orWhere trong 1 function để tạo ngoặc ( ) trong SQL
-            // Tránh lỗi: WHERE status = 'draft' AND title LIKE '%A%' OR description LIKE '%A%'
             $query->where(function ($q) use ($search) {
                 $q->where('title', 'like', '%' . $search . '%')
                   ->orWhere('description', 'like', '%' . $search . '%');
@@ -87,17 +85,18 @@ class ITJob extends Model implements HasMedia
         })->when($filters['created_by'] ?? null, function ($query, $createdBy) {
             $query->where('created_by', $createdBy);
         })->when($filters['sort_by'] ?? 'id', function ($query, $sortBy) use ($filters) {
-            // Tích hợp luôn logic sort vào đây
-            $allowed = ['id', 'title', 'status', 'created_at', 'updated_at'];
+            $allowed = ['id', 'title', 'status', 'created_at', 'updated_at', 'due_at'];
             $column = in_array($sortBy, $allowed) ? $sortBy : 'id';
 
-            $sortOrder = in_array($filters['sort_order'] ?? 'desc', ['asc', 'desc']) ? $filters['sort_order'] : 'desc';
+            // Đã fix lỗi 500 khi không truyền sort_order
+            $order = $filters['sort_order'] ?? 'desc';
+            $sortOrder = in_array(strtolower($order), ['asc', 'desc']) ? $order : 'desc';
 
             $query->orderBy($column, $sortOrder);
         });
     }
 
-   
+
 
     public function creator()
     {
